@@ -1,0 +1,10 @@
+[spesa]
+    float prezzo
+    string data
+    string nome
+    string note
+    string id (UNIVOCO)
+
+[tags]
+    string tag
+    string spesaId
