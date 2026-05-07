@@ -62,19 +62,71 @@ def main(page: ft.Page):
         on_click=lambda e: page.show_dialog(calendar)
     )
 
+    def saveDb():
+        nome = nameTextField.value.strip()
+        prezzo = priceTextField.value
+        if nome == 0 or prezzo == 0:
+            return
+        elemento = {}
+        tagsStr = tagTextField.value.strip()
+        if tagsStr != "":
+            tags = []
+            for tag in tagsStr.split(","):
+                tag = tag.strip()
+                if tag != "":
+                    tags.append(tag)
+        
+
+        
+
+    nameTextField = ft.TextField(label="Name",max_lines=1,)
+    priceTextField = ft.TextField(
+        label="Price",
+        max_lines=1,
+        prefix="€ ",
+        keyboard_type=ft.KeyboardType.NUMBER,
+        input_filter=ft.InputFilter(
+            allow=True, 
+            regex_string=r"^[0-9]*[.]?[0-9]{0,2}$", 
+            replacement_string=""
+        ),
+    )
+    tagTextField = ft.TextField(label="Tags (separati da [,])",multiline=True)
+    noteTextField = ft.TextField(label="Note",multiline=True)
+    confirmButton = ft.IconButton(
+        icon=ft.icons.Icons.ADD,
+        width=200,
+        bgcolor=ft.Colors.GREY_800,
+        #on_click=saveDb,
+    )
+
+        
+
+
     addPayment = ft.Container(
         ft.Column(
             [
                 ft.Text("Nuovo elemento", size=30, weight=ft.FontWeight.BOLD),
-                ft.TextField(label="Name",max_lines=1,),
-                ft.TextField(label="Price",max_lines=1,),
-                dateTextField,
+                ft.ListView(
+                    [
+                        nameTextField,
+                        priceTextField,
+                        dateTextField,
+                        tagTextField,
+                        noteTextField,
+                        confirmButton
+                    ],
+                    auto_scroll=True,
+                    spacing=20,
+                    expand=True,
+                    padding=35,
+                ),
             ],
-            alignment=ft.MainAxisAlignment.START,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         ),
         alignment=ft.Alignment.CENTER,
         expand=True,
+        padding=5,
     ) 
     
 
