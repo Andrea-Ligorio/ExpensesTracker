@@ -1,153 +1,188 @@
 import flet as ft
-from datetime import datetime
+import datetime
 
 def main(page: ft.Page):
-    page.title = "Gestione Spese Personali"
-    page.theme_mode = ft.ThemeMode.LIGHT
-    page.window.width = 450
-    page.window.height = 700
-    
-    # Lista in memoria
-    expenses = []
-    expense_id_counter = 1
+    page.title = "Lista Pagamenti"
+    page.theme_mode = ft.ThemeMode.SYSTEM
+    page.window.width = 480
+    page.window.height = 854
+    page.padding = 15
 
-    # Componenti per l'inserimento
-    txt_nome = ft.TextField(label="Nome spesa")
-    txt_prezzo = ft.TextField(
-        label="Prezzo (€)", 
-        keyboard_type=ft.KeyboardType.NUMBER
-    )
-    txt_data = ft.TextField(
-        label="Data (YYYY-MM-DD)", 
-        value=datetime.now().strftime("%Y-%m-%d")
-    )
-    txt_note = ft.TextField(label="Note")
-    txt_tags = ft.TextField(label="Tag (separati da virgola: es. cibo, svago)")
+    budgetResiduo = 1234.56
 
-    # Lista e riepilogo
-    lv_spese = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
-    lbl_total = ft.Text("Totale: 0.00 €", size=20, weight=ft.FontWeight.BOLD)
+    pagamenti = [
+    {"id": 1, "destinatario": "Amazon", "importo": "€ 45.99", "data": "12/05/2026", "stato": "Completato"},
+    {"id": 2, "destinatario": "Netflix", "importo": "€ 12.99", "data": "10/05/2026", "stato": "Completato"},
+    {"id": 3, "destinatario": "Supermercato", "importo": "€ 85.50", "data": "08/05/2026", "stato": "In sospeso"},
+    {"id": 4, "destinatario": "Bolletta Luce", "importo": "€ 112.45", "data": "05/05/2026", "stato": "Completato"},
+    {"id": 5, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 6, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 7, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 8, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 9, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 10, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 11, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 12, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 13, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 14, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    {"id": 15, "destinatario": "Abbonamento Palestra", "importo": "€ 35.00", "data": "01/05/2026", "stato": "Non riuscito"},
+    ]
 
-    def aggiorna_vista():
-        """Aggiorna la lista delle spese e il totale."""
-        lv_spese.controls.clear()
-        totale = 0.00
-        
-        for spesa in expenses:
-            totale += spesa["prezzo"]
-            tags_str = ", ".join(spesa["tags"])
-            lv_spese.controls.append(
-                ft.Card(
-                    content=ft.Container(
-                        content=ft.Column(
-                            [
-                                ft.ListTile(
-                                    leading=ft.Icon(ft.icons.monetization_on, color=ft.colors.GREEN),
-                                    title=ft.Text(f"[{spesa['id']}] {spesa['nome']}", weight=ft.FontWeight.BOLD),
-                                    subtitle=ft.Text(f"Prezzo: {spesa['prezzo']:.2f} € | Data: {spesa['data']}\nTags: {tags_str or 'Nessuno'}"),
-                                ),
-                                ft.Text(f"Note: {spesa['note']}", size=12, color=ft.colors.GREY, italic=True)
-                            ]
-                        ),
-                        padding=10,
-                    ),
-                )
+    remainingBudget = ft.Column(
+        [
+            ft.Text("Budget residuo:",size=15),
+            ft.Text(
+                f"€{budgetResiduo:.2f}",
+                size=80,
+                weight=ft.FontWeight.BOLD
             )
-        
-        lbl_total.value = f"Totale complessivo: {totale:.2f} €"
-        page.update()
-
-    def salva_spesa(e):
-        nonlocal expense_id_counter # Corretto qui
-        try:
-            nome = txt_nome.value
-            if not nome or not txt_prezzo.value:
-                page.show_snack_bar(
-                    ft.SnackBar(content=ft.Text("Compila almeno Nome e Prezzo!"))
-                )
-                return
-            
-            prezzo = float(txt_prezzo.value)
-            data = txt_data.value
-            note = txt_note.value
-            tags = [t.strip() for t in txt_tags.value.split(',') if t.strip()]
-
-            spesa = {
-                "id": expense_id_counter,
-                "prezzo": prezzo,
-                "data": data,
-                "nome": nome,
-                "note": note,
-                "tags": tags
-            }
-            expenses.append(spesa)
-            expense_id_counter += 1 # E corretto qui
-
-            # Pulizia campi del dialog
-            txt_nome.value = ""
-            txt_prezzo.value = ""
-            txt_data.value = datetime.now().strftime("%Y-%m-%d")
-            txt_note.value = ""
-            txt_tags.value = ""
-
-            # Chiudi la finestra
-            dlg_nuova_spesa.open = False
-            aggiorna_vista()
-            
-            page.show_snack_bar(
-                ft.SnackBar(content=ft.Text("Spesa aggiunta con successo!"))
-            )
-            
-        except ValueError:
-            page.show_snack_bar(
-                ft.SnackBar(content=ft.Text("Inserisci un prezzo numerico valido!"))
-            )
-
-    def apri_dialog(e):
-        page.dialog = dlg_nuova_spesa
-        dlg_nuova_spesa.open = True
-        page.update()
-
-    def chiudi_dialog(e):
-        dlg_nuova_spesa.open = False
-        page.update()
-
-    # Finestra di dialogo (Dialog)
-    dlg_nuova_spesa = ft.AlertDialog(
-        title=ft.Text("Aggiungi nuova spesa"),
-        content=ft.Column(
-            [
-                txt_nome,
-                txt_prezzo,
-                txt_data,
-                txt_note,
-                txt_tags,
-            ],
-            tight=True,
-            width=350,
-        ),
-        actions=[
-            ft.TextButton("Annulla", on_click=chiudi_dialog),
-            ft.ElevatedButton("Salva", on_click=salva_spesa),
         ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        tight=True,
     )
 
-    # Bottone Fluttuante
-    page.floating_action_button = ft.FloatingActionButton(
-        icon="add",
-        bgcolor=ft.colors.GREEN_ACCENT,
-        on_click=apri_dialog
+    oggi = datetime.datetime.now()
+
+    def aggiornaDataText(e):
+        print(calendar.value)
+        dateTextField.value = (calendar.value + datetime.timedelta(hours=9)).strftime("%d/%m/%Y")
+        page.update()
+
+    calendar = ft.DatePicker(
+        value=oggi,
+        first_date=oggi - datetime.timedelta(days=365*50),
+        last_date=oggi + datetime.timedelta(days=365*50),
+        on_change=aggiornaDataText
     )
 
-    aggiorna_vista()
+    dateTextField = ft.TextField(
+        label="Date",
+        value=calendar.value.strftime("%d/%m/%Y"),
+        read_only=True,
+        on_click=lambda e: page.show_dialog(calendar)
+    )
 
-    # Aggiunta alla pagina
+    addPayment = ft.Container(
+        ft.Column(
+            [
+                ft.Text("Nuovo elemento", size=30, weight=ft.FontWeight.BOLD),
+                ft.TextField(label="Name",max_lines=1,),
+                ft.TextField(label="Price",max_lines=1,),
+                dateTextField,
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
+        alignment=ft.Alignment.CENTER,
+        expand=True,
+    ) 
+    
+
+
+    def apriAdd(e):
+            pagina.content = addPayment
+            page.update()
+
+
+    toolBar = ft.Row(
+        [
+            ft.IconButton(
+                icon=ft.icons.Icons.FILTER_ALT,
+                bgcolor=ft.Colors.GREY_800,
+                width=100
+            ),
+            ft.IconButton(
+                icon=ft.icons.Icons.ADD_CIRCLE_OUTLINE,
+                bgcolor=ft.Colors.GREY_800,
+                width=100,
+                on_click=apriAdd
+            )
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        spacing=100,
+    )
+
+    lista_pagamenti = ft.ListView(expand=1, spacing=12, padding=5, auto_scroll=True)
+
+    for p in pagamenti:
+            
+        lista_pagamenti.controls.append(
+                ft.ListTile(
+                    title=ft.Text(p["destinatario"], weight=ft.FontWeight.BOLD),
+                    subtitle=ft.Text(f"Data: {p['data']}"),
+                    trailing=ft.Text(p["importo"], weight=ft.FontWeight.BOLD, size=15),
+                ) 
+        )
+        lista_pagamenti.controls.append(ft.Divider(height=1))
+        
+    home = ft.Container(
+        ft.Column(
+            [
+                remainingBudget,
+                ft.Divider(height=1),
+                toolBar,
+                ft.Divider(height=1),
+                lista_pagamenti,
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
+        expand=True,
+    )
+    
+    pagina = ft.Container(expand=True)
+    pagina.content = home
+
+
+    def cambiaPagina(e):
+        i=e.control.selected_index
+        if i==0:
+            pagina.content = home
+        elif i==1:
+            #pagina.content = addPayment
+            print("apri chart")
+        elif i==2:
+            #pagina = settings
+            print("apri settings")
+        page.update()
+
+    page.navigation_bar = ft.NavigationBar(
+        destinations=[
+            ft.NavigationBarDestination(icon=ft.icons.Icons.HOUSE, label="Home",),
+            ft.NavigationBarDestination(icon=ft.icons.Icons.STACKED_LINE_CHART, label="Pagamenti"),
+            ft.NavigationBarDestination(icon=ft.icons.Icons.SETTINGS, label="negro"),
+        ],
+        selected_index=0,
+        on_change=cambiaPagina,
+    )
+        
+    
+    
+    
+
+
+    # Aggiunta degli elementi alla pagina
     page.add(
-        ft.Text("Gestore Spese Personali", size=26, weight=ft.FontWeight.BOLD),
-        ft.Divider(),
-        lbl_total,
-        lv_spese
+        ft.Row(
+            [
+            ft.Text(
+                "ExpensesTracker",
+                size=20, 
+                weight=ft.FontWeight.BOLD
+            )
+            ],
+            alignment=ft.MainAxisAlignment.CENTER
+        ),
+        ft.Divider(height=1),
+        pagina,
     )
+
+
+    
+    
+
+        
+
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main)
