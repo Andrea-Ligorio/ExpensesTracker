@@ -1,4 +1,5 @@
 import sqlite3
+import Spesa
 
 def creaDb():
     db = sqlite3.connect('spese.db')
@@ -25,10 +26,7 @@ def creaDb():
     db.commit()
     db.close()
 
-def insertSpesa(name, price, date, note, tags):
-    """
-    Inserisce una nuova spesa e i relativi tag nel database.
-    """
+def insertSpesa(spesa):
     db = sqlite3.connect('spese.db')
     cursoreDb = db.cursor()
 
@@ -36,18 +34,18 @@ def insertSpesa(name, price, date, note, tags):
         cursoreDb.execute('''
             INSERT INTO spesa (nome, prezzo, data, note)
             VALUES (?, ?, ?, ?)
-        ''', (name, price, date, note))
+        ''', (spesa.nome, spesa.prezzo, spesa.data, spesa.note))
         
         spesa_id = cursoreDb.lastrowid
         
-        for tag in tags:
+        for tag in spesa.tag:
             cursoreDb.execute('''
                 INSERT INTO tags (tag, spesaId)
                 VALUES (?, ?)
             ''', (tag, spesa_id))
             
         db.commit()
-        print(f"Spesa '{name}' inserita con successo!")
+        print(f"Spesa '{spesa.nome}' inserita con successo!")
         
     except sqlite3.Error as e:
         print(f"Errore durante l'inserimento nel database: {e}")
@@ -99,31 +97,6 @@ def getSpese():
 if __name__ == '__main__':
     # Inizializza il database
     creaDb()
-    
-    # --- 1. Inseriamo più spese di prova ---
-    insertSpesa(
-        name="Spesa al supermercato",
-        price=45.50,
-        date="2026-05-06",
-        note="Acquisto generi alimentari",
-        tags=["cibo", "spesa", "necessario"]
-    )
-    
-    insertSpesa(
-        name="Cena al ristorante",
-        price=60.00,
-        date="2026-05-05",
-        note="Cena con amici",
-        tags=["svago", "ristorante"]
-    )
-    
-    insertSpesa(
-        name="Abbonamento palestra",
-        price=35.00,
-        date="2026-05-01",
-        note="Rata mensile",
-        tags=["sport", "salute"]
-    )
     
     # --- 2. Otteniamo la lista delle spese ---
     spese = getSpese()

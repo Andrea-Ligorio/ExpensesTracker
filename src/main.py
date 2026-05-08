@@ -1,5 +1,7 @@
 import flet as ft
 import datetime
+import Spesa
+import expensesDatabase
 
 def main(page: ft.Page):
     page.title = "Lista Pagamenti"
@@ -7,6 +9,8 @@ def main(page: ft.Page):
     page.window.width = 480
     page.window.height = 854
     page.padding = 15
+
+    expensesDatabase.creaDb()
 
     budgetResiduo = 1234.56
 
@@ -64,17 +68,17 @@ def main(page: ft.Page):
 
     def saveDb():
         nome = nameTextField.value.strip()
-        prezzo = priceTextField.value
-        if nome == 0 or prezzo == 0:
+        if nome == "":
+            print("manca qualcosa")
             return
-        elemento = {}
-        tagsStr = tagTextField.value.strip()
-        if tagsStr != "":
-            tags = []
-            for tag in tagsStr.split(","):
-                tag = tag.strip()
-                if tag != "":
-                    tags.append(tag)
+        spesa = Spesa.Spesa(nome, priceTextField.value, dateTextField.value, noteTextField.value, tagTextField.value)
+        expensesDatabase.insertSpesa(spesa)
+        pagina.content = home
+        page.update()
+
+
+
+
         
 
         
@@ -97,7 +101,7 @@ def main(page: ft.Page):
         icon=ft.icons.Icons.ADD,
         width=200,
         bgcolor=ft.Colors.GREY_800,
-        #on_click=saveDb,
+        on_click=saveDb,
     )
 
         
