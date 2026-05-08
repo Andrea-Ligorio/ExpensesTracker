@@ -54,43 +54,82 @@ def insertSpesa(spesa):
     finally:
         db.close()
 
-def getSpese():
-    """
-    Recupera tutte le spese presenti nel database, inclusi i tag, e le restituisce come lista.
-    """
+def editSpesa(spesa):
     db = sqlite3.connect('spese.db')
+    cursoreDb = db.cursor()
+
+    try:
+        cursoreDb.execute('''
+            UPDATE spesa
+            SET nome = ?, prezzo = ?, data = ?, note = ?
+            WHERE id = ?
+        ''', (spesa.nome, spesa.prezzo, spesa.data, spesa.note, spesa.id))
+
+        cursoreDb.execute('DELETE FROM tags WHERE spesaId = ?', (spesa.id,))
+        for tag in spesa.tag:
+            cursoreDb.execute('''
+                INSERT INTO tags (tag, spesaId)
+                VALUES (?, ?)
+            ''', (tag, spesa.id))
+
+        db.commit()
+        print(f"Spesa con ID {spesa.id} aggiornata con successo!")
+    except sqlite3.Error as e:
+        print(f"Errore durante l'aggiornamento del database: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+def deleteSpesa(spesa_id):
+    db = sqlite3.connect('spese.db')
+    cursoreDb = db.cursor()
+
+    try:
+        cursoreDb.execute('DELETE FROM spesa WHERE id = ?', (spesa_id,))
+        cursoreDb.execute('DELETE FROM tags WHERE spesaId = ?', (spesa_id,))
+        db.commit()
+        print(f"Spesa con ID {spesa_id} eliminata con successo!")
+    except sqlite3.Error as e:
+        print(f"Errore durante l'eliminazione dal database: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+def getSpese():
+    db = sqlite3.connect('spese.db')
+    # Impostiamo il row_factory per accedere ai dati tramite nome colonna
+    db.row_factory = sqlite3.Row 
     cursoreDb = db.cursor()
     
     lista_spese = []
-    
+
     try:
-        cursoreDb.execute('SELECT * FROM spesa')
+        # 1. Recuperiamo tutte le spese principali
+        cursoreDb.execute("SELECT id, nome, prezzo, data, note FROM spesa")
         rows = cursoreDb.fetchall()
-        
+
         for row in rows:
-            spesa_id = row[0]
+            # Trasformiamo la riga in un dizionario
+            spesa = Spesa.Spesa(
+                nome=row['nome'],
+                prezzo=row['prezzo'],
+                data=row['data'],
+                note=row['note'],
+                id=row['id']
+            )
+
+            # 2. Per ogni spesa, recuperiamo i relativi tag
+            cursoreDb.execute("SELECT tag FROM tags WHERE spesaId = ?", (spesa.id,))
+            spesa.tag = [t['tag'] for t in cursoreDb.fetchall()]
             
-            # Recupera i tag associati alla spesa corrente
-            cursoreDb.execute('SELECT tag FROM tags WHERE spesaId = ?', (spesa_id,))
-            tags = [r[0] for r in cursoreDb.fetchall()]
-            
-            spesa_dict = {
-                'id': row[0],
-                'prezzo': row[1],
-                'data': row[2],
-                'nome': row[3],
-                'note': row[4],
-                'tags': tags
-            }
-            
-            lista_spese.append(spesa_dict)
-            
+            lista_spese.append(spesa)
+
     except sqlite3.Error as e:
         print(f"Errore durante la lettura dal database: {e}")
-        
+    
     finally:
         db.close()
-        
+
     return lista_spese
 
 # --- Esempio di utilizzo ---
@@ -102,6 +141,8 @@ if __name__ == '__main__':
     spese = getSpese()
     
     # --- 3. Stampiamo i risultati ---
-    print("\n--- Lista delle spese nel database ---")
+    spese = getSpese()
+
     for s in spese:
-        print(f"ID: {s['id']} | Nome: {s['nome']} | Prezzo: {s['prezzo']}€ | Data: {s['data']} | Tag: {s['tags']}")
+        # Stampa: ID - Nome - Prezzo - Data - Note - [Tags]
+        print(s.nome, s.prezzo, s.data, s.note, s.tag)

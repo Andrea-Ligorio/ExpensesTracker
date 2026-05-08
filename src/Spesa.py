@@ -1,5 +1,6 @@
 class Spesa:
-    def __init__(self, nome, prezzo, data, note = "", tagString = ""):
+    def __init__(self, nome, prezzo, data, note = "", tagString = "", id = None):
+        self.id = id
         self.nome = nome.strip() #string
         self.prezzo = prezzo #float
         self.data = data #string
