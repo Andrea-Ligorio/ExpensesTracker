@@ -132,6 +132,26 @@ def getSpese():
 
     return lista_spese
 
+def getTags():
+    db = sqlite3.connect('spese.db')
+    db.row_factory = sqlite3.Row 
+    cursoreDb = db.cursor()
+    
+    tags = set()
+
+    try:
+        cursoreDb.execute("SELECT DISTINCT tag FROM tags")
+        rows = cursoreDb.fetchall()
+        tags = {row['tag'] for row in rows}
+
+    except sqlite3.Error as e:
+        print(f"Errore durante la lettura dei tag dal database: {e}")
+    
+    finally:
+        db.close()
+
+    return tags
+
 # --- Esempio di utilizzo ---
 if __name__ == '__main__':
     # Inizializza il database

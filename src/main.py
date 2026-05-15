@@ -4,7 +4,7 @@ import Spesa
 import expensesDatabase
 
 def main(page: ft.Page):
-    page.title = "Lista Pagamenti"
+    page.title = "ExpensesTracker"
     page.theme_mode = ft.ThemeMode.SYSTEM
     page.window.width = 480
     page.window.height = 854
@@ -12,12 +12,16 @@ def main(page: ft.Page):
 
     expensesDatabase.creaDb()
     budget = 0
+    settingsFilePath = "settingsExpensesTracker.txt"
+
+    searchKey = ""
+    speseSorted = expensesDatabase.getSpese()
+
     try:
-        with open("settings.txt", "r") as f:
-            budget = float(f.strip())
+        with open(settingsFilePath, "r") as f:
+            budget = float(f.read().strip())
     except:
         print("file non trovato")
-
 
     oggi = datetime.datetime.now()
     def apriAdd(e, payment, rdOy):
@@ -37,12 +41,11 @@ def main(page: ft.Page):
                 expensesDatabase.editSpesa(spesa)
             else:
                 expensesDatabase.insertSpesa(spesa)
-            pagina.content = home()
-            page.update()
+            
+            updateList()
         def deleteDb():
             expensesDatabase.deleteSpesa(payment.id)
-            pagina.content = home()
-            page.update()
+            updateList()
         def aggiornaDataText(e):
             print(calendar.value)
             dateTextField.value = (calendar.value + datetime.timedelta(hours=9)).strftime("%d/%m/%Y")
@@ -133,23 +136,30 @@ def main(page: ft.Page):
         )
 
     def settings():
+        def updateBudget(e):
+            nonlocal budget
+            budget = float(budgetTextField.value) if budgetTextField.value != "" else 0
+            with open(settingsFilePath, "w") as f:
+                f.write(str(budget))
+
+        budgetTextField = ft.TextField(
+            value=budget,
+            label="Budget mensile",
+            prefix="€ ",
+            keyboard_type=ft.KeyboardType.NUMBER,
+            input_filter=ft.InputFilter(
+                allow=True, 
+                regex_string=r"^[0-9]*[.]?[0-9]{0,2}$", 
+                replacement_string=""
+            ),
+            max_lines=1,
+            on_submit= lambda e: updateBudget(e)
+        )
         return ft.Container(
             ft.Column(
                 [
                     ft.Text("Impostazioni", size=30, weight=ft.FontWeight.BOLD),
-                    ft.TextField(
-                        value=budget,
-                        label="Budget mensile",
-                        prefix="€ ",
-                        keyboard_type=ft.KeyboardType.NUMBER,
-                        input_filter=ft.InputFilter(
-                            allow=True, 
-                            regex_string=r"^[0-9]*[.]?[0-9]{0,2}$", 
-                            replacement_string=""
-                        ),
-                        max_lines=1,
-                        on_change= lambda e: budget = e.value
-                    ),
+                    budgetTextField,
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
@@ -162,21 +172,30 @@ def main(page: ft.Page):
         return ft.BottomSheet(
             content=ft.Column(
                 [
-                    ft.SearchBar(
-                        
-                    ),
-                    
-                ]
+
+                ],
             )
         )
 
 
+    def updateList():
+        speseDb = expensesDatabase.getSpese()
+
+        if searchKey != "":
+            searchedSpese = [s for s in speseDb if searchKey in s.nome.lower() or searchKey in s.note.lower() or any(searchKey in t.lower() for t in s.tag)]
+        else:
+            searchedSpese = speseDb
+            nonlocal speseSorted
+        speseSorted = searchedSpese
+        pagina.content = home()
+        page.update()
+
     def home():
         def remainingBudget():
             CurrentMonth = datetime.datetime.now().month
-            spese = expensesDatabase.getSpese()
+            speseDb = expensesDatabase.getSpese()
             speso = 0
-            for s in spese:
+            for s in speseDb:
                 if(datetime.datetime.strptime(s.data, "%d/%m/%Y").month == CurrentMonth):
                     speso+=float(s.prezzo)
             budgetResiduo = budget - speso
@@ -194,31 +213,44 @@ def main(page: ft.Page):
                 tight=True,
             )
         def toolBar():
+            def updateKey(e):
+                nonlocal searchKey
+                searchKey = ricerca.value.strip().lower()
+                updateList()
+
+            ricerca = ft.SearchBar(
+                value=searchKey,
+                height=40,
+                expand=True,
+                on_submit=updateKey,
+            )
+
             return ft.Row(
                 [
+                    ricerca,
                     ft.IconButton(
                         icon=ft.icons.Icons.FILTER_ALT,
                         bgcolor=ft.Colors.GREY_800,
-                        width=100,
-                        on_click=lambda e: page.show_dialog(filter())
+                        on_click=lambda e: page.show_dialog(filter()),
+                        aspect_ratio=1,
+                        disabled=True,
+                        visible=False
                     ),
                     ft.IconButton(
                         icon=ft.icons.Icons.ADD_CIRCLE_OUTLINE,
                         bgcolor=ft.Colors.GREY_800,
-                        width=100,
+                        aspect_ratio=1,
                         on_click=lambda e: apriAdd(e, None, False)
                     )
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
-                spacing=100,
+                spacing=10,
+                height=40,
             )
         def lista_pagamenti():
             speseView = ft.ListView(expand=1, spacing=12, padding=5, auto_scroll=True)
 
-            spese = expensesDatabase.getSpese()
-            spese.sort(key=lambda x: datetime.datetime.strptime(x.data, "%d/%m/%Y"), reverse=True)
-
-            for p in spese:
+            for p in speseSorted:
                 speseView.controls.append(
                     ft.ListTile(
                         title=ft.Text(p.nome, weight=ft.FontWeight.BOLD),
@@ -256,7 +288,6 @@ def main(page: ft.Page):
             pagina.content = home()
         elif i==1:
             pagina.content = settings()
-            print("apri chart")
         page.update()
 
     page.navigation_bar = ft.NavigationBar(
@@ -284,6 +315,5 @@ def main(page: ft.Page):
         pagina,
     )
 
-
 if __name__ == "__main__":
-    ft.run(main)
+    ft.run(main, assets_dir="assets")
