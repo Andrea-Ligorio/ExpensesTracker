@@ -223,6 +223,8 @@ def main(page: ft.Page):
                 height=40,
                 expand=True,
                 on_submit=updateKey,
+                bar_hint_text="🔎 Cerca per nome, note o tag",
+                
             )
 
             return ft.Row(
