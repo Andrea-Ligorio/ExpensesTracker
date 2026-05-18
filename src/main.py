@@ -5,7 +5,7 @@ import expensesDatabase
 
 def main(page: ft.Page):
     page.title = "ExpensesTracker"
-    page.theme_mode = ft.ThemeMode.SYSTEM
+    page.theme_mode = ft.ThemeMode.DARK
     page.window.width = 480
     page.window.height = 854
     page.padding = 15
